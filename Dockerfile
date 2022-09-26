@@ -8,7 +8,7 @@ VOLUME /home
 VOLUME /lib
 VOLUME /etc
 
-RUN apt-get update && apt-get upgrade
+RUN apt-get update && apt-get upgrade -y
 
 RUN apt update \
   && DEBIAN_FRONTEND=noninteractive apt install -y git \
@@ -47,11 +47,13 @@ RUN apt-get install -y gnome-keyring
 RUN apt-get install -y kdepim-runtime
 RUN apt-get install -y expect
 
-COPY install_libnotify4.exp /home/install_libnotify4.exp
-RUN expect /home/install_libnotify4.exp
+#TODO confirm this is not needed
+# COPY install_libnotify4.exp /home/install_libnotify4.exp
+# RUN expect /home/install_libnotify4.exp
 
 RUN apt-get install -y sqlite3 sqlitebrowser
 
+#TODO confirm this is not needed
 # RUN rm /run/reboot-required*
 RUN echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 RUN echo "\
@@ -130,10 +132,7 @@ RUN cd /home && wget https://downloads.mongodb.com/compass/mongodb-mongosh_1.6.0
 RUN cd /home && wget https://downloads.mongodb.com/compass/mongodb-compass_1.33.1_amd64.deb \
   && dpkg -i mongodb-compass_1.33.1_amd64.deb
 
-RUN echo "#ADDITIONAL COMMANDS" > ~/.bashrc \
-  && echo "#DATABASES" > ~/.bashrc \
-  && echo "mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork" > ~/.bashrc
-
 COPY .bash_aliases /root/.bash_aliases
+COPY .bashrc /root/.bashrc
 
 CMD ["bash"]

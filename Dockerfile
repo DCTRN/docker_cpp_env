@@ -1,3 +1,6 @@
+#TODO install:
+# https://www.rabbitmq.com/download.html
+# https://redis.io/docs/clients/
 FROM ubuntu:20.04
 
 RUN mkdir /var/fpwork
@@ -131,6 +134,76 @@ RUN cd /home && wget https://downloads.mongodb.com/compass/mongodb-mongosh_1.6.0
 
 RUN cd /home && wget https://downloads.mongodb.com/compass/mongodb-compass_1.33.1_amd64.deb \
   && dpkg -i mongodb-compass_1.33.1_amd64.deb
+
+RUN apt-get install libssl-dev libsasl2-dev
+
+RUN cd /home && wget https://github.com/mongodb/mongo-c-driver/releases/download/1.23.0/mongo-c-driver-1.23.0.tar.gz \
+  && tar -xzf mongo-c-driver-1.23.0.tar.gz \
+  && rm mongo-c-driver-1.23.0.tar.gz \
+  && cd mongo-c-driver-1.23.0 \
+  && mkdir cmake-build \
+  && cd cmake-build \
+  && cmake -DENABLE_AUTOMATIC_INIT_AND_CLEANUP=OFF -DCMAKE_BUILD_TYPE=Release .. \
+  && make -j $(($(nproc)-2)) install \
+  && make clean \
+  && ldconfig \
+  && cd ../.. \
+  && rm -rf mongo-c-driver-1.23.0
+
+RUN cd /home && wget https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz \
+  && tar -xzf mongo-cxx-driver-r3.6.7.tar.gz \
+  && rm mongo-cxx-driver-r3.6.7.tar.gz \
+  && cd mongo-cxx-driver-r3.6.7/build \
+  && cmake -DCMAKE_BUILD_TYPE=Release .. \
+  && cmake --build . --target EP_mnmlstc_core \
+  && cmake --build . \
+  && cmake --build . --target install \
+  && cd ../.. \
+  && rm -rf mongo-cxx-driver-r3.6.7
+
+COPY install_rabbitmq.sh /home/install_rabbitmq.sh
+RUN /home/install_rabbitmq.sh
+
+RUN cd /home && git clone https://github.com/CopernicaMarketingSoftware/AMQP-CPP.git \
+  && cd AMQP-CPP \
+  && mkdir build \
+  && cd build \
+  && cmake .. -DAMQP-CPP_BUILD_SHARED=ON -DAMQP-CPP_LINUX_TCP=ON \
+  && cmake --build . --target install \
+  && cd ../.. \
+  && rm -rf AMQP-CPP
+
+RUN cd /home && wget https://download.redis.io/redis-stable.tar.gz \
+  && tar -xzvf redis-stable.tar.gz \
+  && rm -rf redis-stable.tar.gz \
+  && cd redis-stable \
+  && make \
+  && make -j $(($(nproc)-2)) install \
+  && make clean \
+  && ldconfig \
+  && cd .. \
+  && rm -rf redis-stable
+
+RUN cd /home && git clone https://github.com/redis/hiredis.git \
+  && cd hiredis \
+  && make \
+  && make -j $(($(nproc)-2)) install \
+  && make clean \
+  && ldconfig \
+  && cd .. \
+  && rm -rf hiredis
+
+RUN cd /home && git clone https://github.com/sewenew/redis-plus-plus.git \
+  && cd redis-plus-plus \
+  && mkdir build \
+  && cd build \
+  && cmake .. \
+  && make \
+  && make -j $(($(nproc)-2)) install \
+  && make clean \
+  && ldconfig \
+  && cd ../.. \
+  && rm -rf hiredis
 
 COPY .bash_aliases /root/.bash_aliases
 COPY .bashrc /root/.bashrc
